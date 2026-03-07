@@ -8,6 +8,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  ReferenceLine,
 } from "recharts";
 import { formatCurrency } from "@/lib/utils";
 
@@ -16,14 +17,31 @@ interface DataPoint {
   total: number;
 }
 
-export function MonthlyEvolutionLine({ data }: { data: DataPoint[] }) {
+interface MonthlyEvolutionLineProps {
+  data: DataPoint[];
+  spendingCap?: number | null;
+}
+
+function formatYAxisTick(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1000) {
+    return `R$ ${(value / 1000).toFixed(1).replace(".", ",")}k`;
+  }
+  return `R$ ${value.toFixed(0)}`;
+}
+
+export function MonthlyEvolutionLine({
+  data,
+  spendingCap,
+}: MonthlyEvolutionLineProps) {
   return (
     <ResponsiveContainer width="100%" height={300}>
       <LineChart data={data}>
         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
         <XAxis dataKey="month" tick={{ fontSize: 12 }} />
         <YAxis
-          tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`}
+          width={80}
+          tickFormatter={(v) => formatYAxisTick(Number(v ?? 0))}
           tick={{ fontSize: 12 }}
         />
         <Tooltip
@@ -34,12 +52,27 @@ export function MonthlyEvolutionLine({ data }: { data: DataPoint[] }) {
             borderRadius: "6px",
           }}
         />
+        {typeof spendingCap === "number" && Number.isFinite(spendingCap) ? (
+          <ReferenceLine
+            y={spendingCap}
+            ifOverflow="extendDomain"
+            stroke="#ffffff"
+            strokeOpacity={0.75}
+            strokeDasharray="6 6"
+            label={{
+              value: `Teto: ${formatCurrency(spendingCap)}`,
+              position: "insideTopRight",
+              fill: "#ffffff",
+              fontSize: 11,
+            }}
+          />
+        ) : null}
         <Line
           type="monotone"
           dataKey="total"
-          stroke="hsl(var(--negative))"
+          stroke="#ffffff"
           strokeWidth={2}
-          dot={{ fill: "hsl(var(--negative))" }}
+          dot={{ fill: "#ffffff", r: 3 }}
         />
       </LineChart>
     </ResponsiveContainer>

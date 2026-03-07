@@ -22,6 +22,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { toast } from "sonner";
+import { LoadingCoin } from "@/components/loading-coin";
 
 export default function InvestmentsPage() {
   const utils = trpc.useUtils();
@@ -126,9 +127,7 @@ export default function InvestmentsPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <p className="text-muted-foreground py-8 text-center">
-                Carregando...
-              </p>
+              <LoadingCoin label="Carregando investimentos..." className="py-8" />
             ) : !listData?.data.length ? (
               <p className="text-muted-foreground py-8 text-center">
                 Nenhum investimento. Importe um CSV para começar.

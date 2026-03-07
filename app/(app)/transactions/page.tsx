@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
+import { LoadingCoin } from "@/components/loading-coin";
 
 export default function TransactionsPage() {
   const [month, setMonth] = useState<string>("all");
@@ -174,9 +175,7 @@ export default function TransactionsPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p className="text-muted-foreground py-8 text-center">
-              Carregando...
-            </p>
+            <LoadingCoin label="Carregando transações..." className="py-8" />
           ) : !data?.data.length ? (
             <p className="text-muted-foreground py-8 text-center">
               Nenhuma transação. Importe um CSV para começar.

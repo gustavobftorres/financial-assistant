@@ -9,6 +9,7 @@ import { SpendingByCategoryBar } from "@/components/charts/spending-by-category-
 import { MonthlyEvolutionLine } from "@/components/charts/monthly-evolution-line";
 import { CategoryDonut } from "@/components/charts/category-donut";
 import { MonthlyOverviewCard } from "@/components/monthly-overview-card";
+import { LoadingCoin } from "@/components/loading-coin";
 
 const EXCLUDED_CATEGORIES_FROM_CHARTS = new Set(["Invoice Payment", "Incomes"]);
 
@@ -51,11 +52,13 @@ export default function DashboardPage() {
   }, [listData]);
 
   const profile = trpc.profile.get.useQuery();
-  const savingsGoal = profile.data?.monthly_savings_goal ?? 0;
+  const monthlyIncome = Number(profile.data?.monthly_income ?? 0);
+  const monthlySavingsGoal = Number(profile.data?.monthly_savings_goal ?? 0);
+  const spendingCap = monthlyIncome - monthlySavingsGoal;
   const savingsAchieved = summary?.projectedBalance ?? 0;
   const progress =
-    savingsGoal > 0
-      ? Math.min(100, Math.max(0, (savingsAchieved / savingsGoal) * 100))
+    monthlySavingsGoal > 0
+      ? Math.min(100, Math.max(0, (savingsAchieved / monthlySavingsGoal) * 100))
       : 0;
 
   function calculateMonthOverMonth(current: number, prev: number): number | null {
@@ -76,7 +79,7 @@ export default function DashboardPage() {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-muted-foreground">Carregando...</p>
+        <LoadingCoin label="Carregando dashboard..." className="py-6" />
       </div>
     );
   }
@@ -190,7 +193,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {evolution?.length ? (
-              <MonthlyEvolutionLine data={evolution} />
+              <MonthlyEvolutionLine data={evolution} spendingCap={spendingCap} />
             ) : (
               <p className="py-12 text-center text-muted-foreground">
                 Sem dados
