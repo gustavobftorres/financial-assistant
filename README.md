@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FroshFunds — Assistente Pessoal de Finanças
 
-## Getting Started
+Aplicação web para gerenciamento de finanças pessoais: importação de extratos bancários via CSV, dashboards de gastos, e assistente de IA para insights e sugestões.
 
-First, run the development server:
+## Stack
+
+- **Framework:** Next.js 14 (App Router)
+- **UI:** ShadCN/UI + Tailwind CSS
+- **API:** tRPC
+- **Banco:** Supabase (PostgreSQL + Auth)
+- **IA:** OpenAI gpt-4o-mini
+- **Gráficos:** Recharts
+
+## Pré-requisitos
+
+1. Conta no [Supabase](https://supabase.com)
+2. Chave de API do [OpenAI](https://platform.openai.com/api-keys)
+
+## Configuração
+
+1. Clone o repositório e instale as dependências:
+
+```bash
+npm install
+```
+
+2. Copie o arquivo de ambiente:
+
+```bash
+cp .env.example .env.local
+```
+
+3. Preencha `.env.local` com suas credenciais:
+   - **NEXT_PUBLIC_SUPABASE_URL** e **NEXT_PUBLIC_SUPABASE_ANON_KEY** — Supabase Dashboard > Settings > API
+   - **SUPABASE_SERVICE_ROLE_KEY** — Supabase Dashboard > Settings > API (chave service_role)
+   - **OPENAI_API_KEY** — platform.openai.com > API keys
+
+4. Execute as migrações no Supabase (via CLI):
+   ```bash
+   # Faça login (abre o navegador)
+   supabase login
+
+   # Vincule ao seu projeto (use o project ref da URL: https://<PROJECT_REF>.supabase.co)
+   supabase link --project-ref <SEU_PROJECT_REF>
+
+   # Envie as migrações para criar as tabelas
+   supabase db push
+   ```
+   Ou, manualmente: Supabase Dashboard > SQL Editor > cole o conteúdo de `supabase/migrations/20240307120000_initial_schema.sql` > Execute
+
+5. Confirme que o provedor de e-mail está ativo:
+   - Supabase Dashboard > Authentication > Providers > Email
+
+## Desenvolvimento
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy (Vercel)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Conecte o repositório ao Vercel
+2. Configure as variáveis de ambiente
+3. Deploy
 
-## Learn More
+## Formato do CSV (transações)
 
-To learn more about Next.js, take a look at the following resources:
+```
+Data,Descrição,Valor
+2024-01-15,iFood,-45.90
+2024-01-14,Salário,5000.00
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Licença
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
