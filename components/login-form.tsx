@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,8 +31,9 @@ export function LoginForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<"password" | "google" | null>(null);
+  const [loading, setLoading] = useState<"password" | "google" | "phantom" | null>(null);
   const router = useRouter();
+  const utils = trpc.useUtils();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -66,6 +68,53 @@ export function LoginForm({
 
     if (error) {
       setError(error.message);
+      setLoading(null);
+    }
+  }
+
+  async function handlePhantomSignIn() {
+    const hasPhantom = typeof window !== "undefined" && !!(window.phantom?.solana ?? window.solana);
+    if (!hasPhantom) {
+      setError("Phantom não encontrado. Instale a extensão Phantom.");
+      return;
+    }
+    setError(null);
+    setLoading("phantom");
+
+    const supabase = createClient();
+    // Supabase uses window.solana by default (Phantom injects it)
+    const { data, error } = await supabase.auth.signInWithWeb3({
+      chain: "solana",
+      statement: "Entre no FroshFunds com sua carteira Phantom.",
+    });
+
+    if (error) {
+      setError(error.message);
+      setLoading(null);
+      return;
+    }
+
+    if (!data.session) {
+      setError("Falha ao conectar. Tente novamente.");
+      setLoading(null);
+      return;
+    }
+
+    try {
+      const { linked } = await utils.wallet.checkWalletLinked.fetch();
+      if (!linked) {
+        await supabase.auth.signOut();
+        setError(
+          "Esta carteira não está vinculada. Entre com e-mail ou Google, vá em Investimentos e vincule sua carteira Phantom."
+        );
+        setLoading(null);
+        return;
+      }
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      await supabase.auth.signOut();
+      setError("Erro ao verificar carteira. Tente novamente.");
       setLoading(null);
     }
   }
@@ -166,6 +215,26 @@ export function LoginForm({
                     </>
                   ) : (
                     "Entrar com Google"
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  type="button"
+                  className="w-full"
+                  onClick={handlePhantomSignIn}
+                  disabled={loading !== null}
+                >
+                  {loading === "phantom" ? (
+                    <>
+                      <Loader2
+                        data-icon="inline-start"
+                        className="animate-spin"
+                        aria-hidden
+                      />
+                      Verificando...
+                    </>
+                  ) : (
+                    "Entrar com Phantom"
                   )}
                 </Button>
                 <FieldDescription className="text-center">

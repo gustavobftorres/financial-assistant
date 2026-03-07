@@ -33,6 +33,8 @@ export default function InvestmentsPage() {
   });
 
   const { data: summary } = trpc.investments.summary.useQuery();
+  const { data: linkStatus } = trpc.wallet.getLinkStatus.useQuery();
+  const { data: walletBalances } = trpc.wallet.getBalances.useQuery();
 
   const importMutation = trpc.investments.import.useMutation({
     onSuccess: (result) => {
@@ -43,7 +45,13 @@ export default function InvestmentsPage() {
     onError: (e) => toast.error(e.message),
   });
 
-  const evolutionData =
+  const csvTotal = summary?.totalNetWorth ?? 0;
+  const walletTotalBRL = walletBalances?.totalBRL ?? 0;
+  const hasWallet = Array.isArray(linkStatus) && linkStatus.length > 0;
+  const totalNetWorth = csvTotal + walletTotalBRL;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const evolutionDataRaw =
     listData?.data
       .filter((i) => i.operation !== "sell")
       .reduce((acc, inv) => {
@@ -53,8 +61,17 @@ export default function InvestmentsPage() {
         if (existing) existing.total += val;
         else acc.push({ date: d, total: val });
         return acc;
-      }, [] as { date: string; total: number }[])
-      .sort((a: { date: string }, b: { date: string }) => a.date.localeCompare(b.date)) ?? [];
+      }, [] as { date: string; total: number }[]) ?? [];
+  if (hasWallet) {
+    const existing = evolutionDataRaw.find(
+      (e: { date: string; total: number }) => e.date === today
+    );
+    if (existing) existing.total += walletTotalBRL;
+    else evolutionDataRaw.push({ date: today, total: walletTotalBRL });
+  }
+  const evolutionData = [...evolutionDataRaw].sort((a, b) =>
+    a.date.localeCompare(b.date)
+  );
 
   return (
     <div className="space-y-6">
@@ -73,8 +90,13 @@ export default function InvestmentsPage() {
         </CardHeader>
         <CardContent>
           <p className="text-2xl font-semibold text-positive">
-            {formatCurrency(summary?.totalNetWorth ?? 0)}
+            {formatCurrency(totalNetWorth)}
           </p>
+          {hasWallet && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Inclui R$ {formatCurrency(walletTotalBRL)} da carteira Phantom
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -115,7 +137,7 @@ export default function InvestmentsPage() {
               </ResponsiveContainer>
             ) : (
               <p className="py-12 text-center text-muted-foreground">
-                Importe um CSV para ver a evolução
+                Importe um CSV ou conecte sua carteira Phantom para ver a evolução
               </p>
             )}
           </CardContent>
@@ -128,9 +150,9 @@ export default function InvestmentsPage() {
           <CardContent>
             {isLoading ? (
               <LoadingCoin label="Carregando investimentos..." className="py-8" />
-            ) : !listData?.data.length ? (
+            ) : !listData?.data.length && !hasWallet ? (
               <p className="text-muted-foreground py-8 text-center">
-                Nenhum investimento. Importe um CSV para começar.
+                Nenhum investimento. Importe um CSV ou conecte sua carteira Phantom.
               </p>
             ) : (
               <Table>
@@ -143,7 +165,36 @@ export default function InvestmentsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {listData.data.map((inv) => (
+                  {hasWallet &&
+                    (linkStatus ?? []).map((link) => {
+                      const bal =
+                        link.chain === "solana"
+                          ? walletBalances?.solana
+                          : link.chain === "ethereum"
+                            ? walletBalances?.ethereum
+                            : walletBalances?.bitcoin;
+                      const brl = bal?.brl ?? 0;
+                      const labels: Record<string, string> = {
+                        solana: "SOL",
+                        ethereum: "ETH",
+                        bitcoin: "BTC",
+                      };
+                      return (
+                        <TableRow key={link.chain}>
+                          <TableCell className="text-muted-foreground">
+                            {formatDate(today)}
+                          </TableCell>
+                          <TableCell>
+                            Carteira Phantom ({labels[link.chain] ?? link.chain})
+                          </TableCell>
+                          <TableCell>Crypto</TableCell>
+                          <TableCell className="text-right text-positive">
+                            {formatCurrency(brl)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  {listData?.data.map((inv) => (
                     <TableRow key={inv.id}>
                       <TableCell className="text-muted-foreground">
                         {formatDate(inv.date)}
