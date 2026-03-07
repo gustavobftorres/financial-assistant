@@ -10,12 +10,19 @@ import { MonthlyEvolutionLine } from "@/components/charts/monthly-evolution-line
 import { CategoryDonut } from "@/components/charts/category-donut";
 import { MonthlyOverviewCard } from "@/components/monthly-overview-card";
 
+const EXCLUDED_CATEGORIES_FROM_CHARTS = new Set(["Invoice Payment", "Incomes"]);
+
 export default function DashboardPage() {
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const previous = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const previousMonth = `${previous.getFullYear()}-${String(previous.getMonth() + 1).padStart(2, "0")}`;
 
   const { data: summary, isLoading: summaryLoading } =
     trpc.transactions.summary.useQuery({ month: currentMonth });
+  const { data: previousSummary } = trpc.transactions.summary.useQuery({
+    month: previousMonth,
+  });
 
   const { data: evolution } = trpc.transactions.monthlyEvolution.useQuery({
     months: 6,
@@ -32,6 +39,9 @@ export default function DashboardPage() {
     const map: Record<string, number> = {};
     for (const tx of listData?.data ?? []) {
       const cat = tx.category || "Outro";
+      if (EXCLUDED_CATEGORIES_FROM_CHARTS.has(cat)) {
+        continue;
+      }
       map[cat] = (map[cat] ?? 0) + Math.abs(Number(tx.amount));
     }
     return Object.entries(map)
@@ -47,6 +57,20 @@ export default function DashboardPage() {
     savingsGoal > 0
       ? Math.min(100, Math.max(0, (savingsAchieved / savingsGoal) * 100))
       : 0;
+
+  function calculateMonthOverMonth(current: number, prev: number): number | null {
+    if (prev === 0) return null;
+    return ((current - prev) / prev) * 100;
+  }
+
+  const incomeMoM = calculateMonthOverMonth(
+    summary?.totalIncome ?? 0,
+    previousSummary?.totalIncome ?? 0
+  );
+  const expenseMoM = calculateMonthOverMonth(
+    summary?.totalExpense ?? 0,
+    previousSummary?.totalExpense ?? 0
+  );
 
   if (summaryLoading) {
     return (
@@ -65,24 +89,50 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
-              Gastos do mês
+              Receitas do mês
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-mono font-semibold text-negative">
-              {formatCurrency(summary?.totalExpense ?? 0)}
+            <p className="text-2xl font-semibold text-positive">
+              {formatCurrency(summary?.totalIncome ?? 0)}
+            </p>
+            <p
+              className={`mt-1 text-xs ${
+                incomeMoM === null
+                  ? "text-muted-foreground"
+                  : incomeMoM >= 0
+                    ? "text-positive"
+                    : "text-negative"
+              }`}
+            >
+              {incomeMoM === null
+                ? "Sem base no mês anterior"
+                : `${incomeMoM >= 0 ? "+" : ""}${incomeMoM.toFixed(1)}% vs mês anterior`}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
-              Receitas do mês
+              Gastos do mês
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-mono font-semibold text-positive">
-              {formatCurrency(summary?.totalIncome ?? 0)}
+            <p className="text-2xl font-semibold text-negative">
+              {formatCurrency(summary?.totalExpense ?? 0)}
+            </p>
+            <p
+              className={`mt-1 text-xs ${
+                expenseMoM === null
+                  ? "text-muted-foreground"
+                  : expenseMoM >= 0
+                    ? "text-positive"
+                    : "text-negative"
+              }`}
+            >
+              {expenseMoM === null
+                ? "Sem base no mês anterior"
+                : `${expenseMoM >= 0 ? "+" : ""}${expenseMoM.toFixed(1)}% vs mês anterior`}
             </p>
           </CardContent>
         </Card>
@@ -94,7 +144,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <p
-              className={`text-2xl font-mono font-semibold ${
+              className={`text-2xl font-semibold ${
                 (summary?.projectedBalance ?? 0) >= 0
                   ? "text-positive"
                   : "text-negative"

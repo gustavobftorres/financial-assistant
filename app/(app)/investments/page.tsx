@@ -71,7 +71,7 @@ export default function InvestmentsPage() {
           <CardTitle>Patrimônio líquido</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-2xl font-mono font-semibold text-positive">
+          <p className="text-2xl font-semibold text-positive">
             {formatCurrency(summary?.totalNetWorth ?? 0)}
           </p>
         </CardContent>
@@ -140,18 +140,18 @@ export default function InvestmentsPage() {
                     <TableHead>Data</TableHead>
                     <TableHead>Ativo</TableHead>
                     <TableHead>Tipo</TableHead>
-                    <TableHead className="text-right font-mono">Valor</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {listData.data.map((inv) => (
                     <TableRow key={inv.id}>
-                      <TableCell className="font-mono text-muted-foreground">
+                      <TableCell className="text-muted-foreground">
                         {formatDate(inv.date)}
                       </TableCell>
                       <TableCell>{inv.asset_name}</TableCell>
                       <TableCell>{inv.asset_type || "-"}</TableCell>
-                      <TableCell className="text-right font-mono text-positive">
+                      <TableCell className="text-right text-positive">
                         {formatCurrency(Number(inv.total_value) ?? 0)}
                       </TableCell>
                     </TableRow>

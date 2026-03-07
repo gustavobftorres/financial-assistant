@@ -37,9 +37,9 @@ export function MonthlyEvolutionLine({ data }: { data: DataPoint[] }) {
         <Line
           type="monotone"
           dataKey="total"
-          stroke="#EF4444"
+          stroke="hsl(var(--negative))"
           strokeWidth={2}
-          dot={{ fill: "#EF4444" }}
+          dot={{ fill: "hsl(var(--negative))" }}
         />
       </LineChart>
     </ResponsiveContainer>

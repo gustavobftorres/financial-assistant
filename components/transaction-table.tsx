@@ -37,6 +37,8 @@ const CATEGORIES = [
   "Clothing",
   "Home",
   "Investments",
+  "Incomes",
+  "Invoice Payment",
   "Other",
 ];
 
@@ -50,40 +52,45 @@ export function TransactionTable({
   onCategoryChange,
 }: TransactionTableProps) {
   return (
-    <Table>
+    <Table className="min-w-[640px]">
       <TableHeader>
         <TableRow>
           <TableHead>Data</TableHead>
           <TableHead>Descrição</TableHead>
-          <TableHead className="text-right font-mono">Valor</TableHead>
-          <TableHead>Categoria</TableHead>
+          <TableHead className="text-right">Valor</TableHead>
+          <TableHead className="w-[156px]">Categoria</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {transactions.map((tx) => (
           <TableRow key={tx.id}>
-            <TableCell className="font-mono text-muted-foreground">
+            <TableCell className="text-muted-foreground">
               {formatDate(tx.date)}
             </TableCell>
-            <TableCell>{tx.description}</TableCell>
+            <TableCell className="max-w-[260px] truncate sm:max-w-[340px]">
+              {tx.description}
+            </TableCell>
             <TableCell
               className={cn(
-                "text-right font-mono",
+                "text-right",
                 tx.amount >= 0 ? "text-positive" : "text-negative"
               )}
             >
               {formatCurrency(tx.amount)}
             </TableCell>
-            <TableCell>
+            <TableCell className="w-[156px]">
               <DropdownMenu>
                 <DropdownMenuTrigger>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 gap-1 px-2 font-normal"
+                    className="h-7 w-full justify-between gap-1 px-2 font-normal"
                   >
-                    <Badge variant="secondary" className="font-normal">
-                      {tx.category || "Outro"}
+                    <Badge
+                      variant="secondary"
+                      className="max-w-[112px] truncate font-normal"
+                    >
+                      {tx.category || (tx.amount > 0 ? "Incomes" : "Outro")}
                     </Badge>
                     <ChevronDown className="h-3 w-3" />
                   </Button>

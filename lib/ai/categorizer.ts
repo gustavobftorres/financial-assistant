@@ -17,6 +17,8 @@ const CATEGORIES = [
   "Clothing",
   "Home",
   "Investments",
+  "Incomes",
+  "Invoice Payment",
   "Other",
 ];
 
@@ -34,6 +36,19 @@ export async function categorizeBatch(
     .eq("user_id", userId);
 
   if (!txs || txs.length === 0) return;
+
+  const incomes = txs.filter((t) => Number(t.amount) > 0);
+  const expenses = txs.filter((t) => Number(t.amount) <= 0);
+
+  for (const tx of incomes) {
+    await supabase
+      .from("transactions")
+      .update({ category: "Incomes" })
+      .eq("id", tx.id)
+      .eq("user_id", userId);
+  }
+
+  if (expenses.length === 0) return;
 
   const { data: historic } = await supabase
     .from("transactions")
@@ -53,7 +68,7 @@ ${CATEGORIES.join(", ")}
 User context: ${userHistory || "No prior history"}
 
 Transactions (JSON array with "description" and "amount"):
-${JSON.stringify(txs.map((t) => ({ description: t.description, amount: t.amount })))}
+${JSON.stringify(expenses.map((t) => ({ description: t.description, amount: t.amount })))}
 
 Respond ONLY with a JSON array of category strings in the same order as the input.
 Example: ["Restaurants", "Subscriptions", "Groceries"]`;
@@ -71,14 +86,14 @@ Example: ["Restaurants", "Subscriptions", "Groceries"]`;
   const categories = safeParseCategories(content);
   const validCategories = CATEGORIES;
 
-  for (let i = 0; i < txs.length && i < categories.length; i++) {
+  for (let i = 0; i < expenses.length && i < categories.length; i++) {
     const cat = validCategories.includes(categories[i])
       ? categories[i]
       : "Other";
     await supabase
       .from("transactions")
       .update({ category: cat })
-      .eq("id", txs[i].id)
+      .eq("id", expenses[i].id)
       .eq("user_id", userId);
   }
 }

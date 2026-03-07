@@ -8,8 +8,10 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Cell,
 } from "recharts";
 import { formatCurrency } from "@/lib/utils";
+import { getCategoryColor } from "@/lib/category-colors";
 
 interface DataPoint {
   category: string;
@@ -40,7 +42,14 @@ export function SpendingByCategoryBar({ data }: { data: DataPoint[] }) {
             borderRadius: "6px",
           }}
         />
-        <Bar dataKey="total" fill="#EF4444" radius={[0, 4, 4, 0]} />
+        <Bar dataKey="total" radius={[0, 4, 4, 0]}>
+          {data.map((entry) => (
+            <Cell
+              key={entry.category}
+              fill={getCategoryColor(entry.category)}
+            />
+          ))}
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );

@@ -77,6 +77,8 @@ export default function TransactionsPage() {
     "Education",
     "Home",
     "Investments",
+    "Incomes",
+    "Invoice Payment",
     "Other",
   ];
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / pageSize));
@@ -187,11 +189,11 @@ export default function TransactionsPage() {
                   updateCategory.mutate({ id, category: cat })
                 }
               />
-              <div className="mt-4 flex items-center justify-between">
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-muted-foreground">
                   Página {page + 1} de {totalPages}
                 </p>
-                <div className="flex gap-2">
+                <div className="flex gap-2 self-start sm:self-auto">
                   <Button
                     variant="outline"
                     size="sm"

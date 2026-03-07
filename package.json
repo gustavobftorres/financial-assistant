@@ -12,6 +12,7 @@
     "@base-ui/react": "^1.2.0",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.98.0",
+    "@tailwindcss/postcss": "^4.2.1",
     "@tanstack/react-query": "^5.90.21",
     "@trpc/client": "^11.12.0",
     "@trpc/react-query": "^11.12.0",
@@ -20,8 +21,10 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.577.0",
     "next": "14.2.35",
+    "next-themes": "^0.4.6",
     "openai": "^6.27.0",
     "papaparse": "^5.5.3",
+    "radix-ui": "^1.4.3",
     "react": "^18",
     "react-dom": "^18",
     "recharts": "^3.8.0",
@@ -40,7 +43,7 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
     "postcss": "^8",
-    "tailwindcss": "^3.4.1",
+    "tailwindcss": "^4.2.1",
     "typescript": "^5"
   }
 }
