@@ -24,11 +24,6 @@ interface PortfolioVsCDIChartProps {
   rendimentoCDI: number;
 }
 
-const MONTH_LABELS: Record<string, string> = {
-  "01": "Jan", "02": "Fev", "03": "Mar", "04": "Abr", "05": "Mai", "06": "Jun",
-  "07": "Jul", "08": "Ago", "09": "Set", "10": "Out", "11": "Nov", "12": "Dez",
-};
-
 export function PortfolioVsCDIChart({
   data,
   rendimentoCarteira,
@@ -66,7 +61,7 @@ export function PortfolioVsCDIChart({
             tick={{ fontSize: 11 }}
           />
           <Tooltip
-            formatter={(value: number) => [`${Number(value).toFixed(2)}%`, ""]}
+            formatter={(value) => [`${Number(value ?? 0).toFixed(2)}%`, ""]}
             labelFormatter={(_, payload) => {
               const p = payload[0]?.payload as DataPoint | undefined;
               return p?.dateLabel ?? "";

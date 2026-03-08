@@ -1,9 +1,9 @@
 /**
  * CDI data fetcher.
- * Source: BCB (Banco Central) - série 4391 (CDI mensal)
+ * Source: BCB (Banco Central) - series 4391 (monthly CDI)
  * https://api.bcb.gov.br/dados/serie/bcdata.sgs.4391/dados?formato=json
  *
- * Formato: { "data": "01/MM/YYYY", "valor": "1.28" } — valor já em % mensal
+ * Format: { "data": "01/MM/YYYY", "valor": "1.28" } — valor is monthly rate in %
  */
 
 export interface CDIMonthlyRate {
@@ -25,7 +25,7 @@ async function fetchFromBCB(): Promise<CDIMonthlyRate[]> {
   const rates: CDIMonthlyRate[] = [];
   for (const r of arr) {
     const d = String(r.data);
-    const [day, month, year] = d.split("/");
+    const [, month, year] = d.split("/");
     const y = parseInt(year ?? "0", 10);
     const m = parseInt(month ?? "0", 10);
     if (!y || !m || y < 2000 || y > 2030) continue;

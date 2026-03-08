@@ -77,10 +77,8 @@ export default function InvestmentsPage() {
     onError: (e) => toast.error(e.message),
   });
 
-  const csvTotal = summary?.totalNetWorth ?? 0;
   const walletTotalBRL = walletBalances?.totalBRL ?? 0;
   const hasWallet = Array.isArray(linkStatus) && linkStatus.length > 0;
-  const totalNetWorth = csvTotal + walletTotalBRL;
 
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
