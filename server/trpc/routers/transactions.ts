@@ -76,6 +76,56 @@ export const transactionsRouter = router({
       };
     }),
 
+  avgByCategory: authedProcedure
+    .input(
+      z.object({
+        months: z.number().min(1).max(24).default(6),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const EXCLUDED = new Set(["Invoice Payment", "Incomes"]);
+      const now = new Date();
+      const monthlyTotals: Record<string, number[]> = {};
+
+      for (let i = 0; i < input.months; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const start = new Date(d.getFullYear(), d.getMonth(), 1)
+          .toISOString()
+          .split("T")[0];
+        const end = new Date(d.getFullYear(), d.getMonth() + 1, 0)
+          .toISOString()
+          .split("T")[0];
+
+        const { data } = await ctx.supabase
+          .from("transactions")
+          .select("category, amount")
+          .eq("user_id", ctx.userId)
+          .gte("date", start)
+          .lte("date", end)
+          .lt("amount", 0);
+
+        const monthMap: Record<string, number> = {};
+        for (const row of data ?? []) {
+          const cat = row.category || "Other";
+          if (EXCLUDED.has(cat)) continue;
+          monthMap[cat] = (monthMap[cat] ?? 0) + Math.abs(Number(row.amount));
+        }
+        for (const [cat, total] of Object.entries(monthMap)) {
+          if (!monthlyTotals[cat]) monthlyTotals[cat] = [];
+          monthlyTotals[cat].push(total);
+        }
+      }
+
+      return Object.entries(monthlyTotals)
+        .map(([category, totals]) => ({
+          category,
+          avg:
+            totals.reduce((a, b) => a + b, 0) /
+            (totals.length > 0 ? totals.length : 1),
+        }))
+        .sort((a, b) => b.avg - a.avg);
+    }),
+
   monthlyEvolution: authedProcedure
     .input(
       z.object({

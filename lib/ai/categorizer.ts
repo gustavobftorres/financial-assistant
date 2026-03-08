@@ -1,26 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
+import { DEFAULT_CATEGORIES } from "@/lib/default-categories";
 
-const CATEGORIES = [
-  "Food & Dining",
-  "Restaurants",
-  "Groceries",
-  "Transportation",
-  "Fuel",
-  "Public Transit",
-  "Entertainment",
-  "Streaming",
-  "Subscriptions",
-  "Health",
-  "Pharmacy",
-  "Education",
-  "Clothing",
-  "Home",
-  "Investments",
-  "Incomes",
-  "Invoice Payment",
-  "Other",
-];
+const DEFAULT_CATEGORY_NAMES = DEFAULT_CATEGORIES.map((c) => c.name);
 
 export async function categorizeBatch(
   transactionIds: string[],
@@ -28,6 +10,16 @@ export async function categorizeBatch(
   supabase: SupabaseClient
 ): Promise<void> {
   if (transactionIds.length === 0) return;
+
+  const { data: userCategories } = await supabase
+    .from("categories")
+    .select("name")
+    .eq("user_id", userId)
+    .order("sort_order");
+  const categories =
+    userCategories && userCategories.length > 0
+      ? userCategories.map((c) => c.name)
+      : DEFAULT_CATEGORY_NAMES;
 
   const { data: txs } = await supabase
     .from("transactions")
@@ -63,7 +55,7 @@ export async function categorizeBatch(
 
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const prompt = `You are a financial transaction classifier. Classify each transaction into one of these categories:
-${CATEGORIES.join(", ")}
+${categories.join(", ")}
 
 User context: ${userHistory || "No prior history"}
 
@@ -83,13 +75,13 @@ Example: ["Restaurants", "Subscriptions", "Groceries"]`;
   const content = response.choices[0]?.message?.content;
   if (!content) return;
 
-  const categories = safeParseCategories(content);
-  const validCategories = CATEGORIES;
+  const parsed = safeParseCategories(content);
 
-  for (let i = 0; i < expenses.length && i < categories.length; i++) {
-    const cat = validCategories.includes(categories[i])
-      ? categories[i]
-      : "Other";
+  const fallbackCat = categories.includes("Other")
+    ? "Other"
+    : categories[0] ?? "Other";
+  for (let i = 0; i < expenses.length && i < parsed.length; i++) {
+    const cat = categories.includes(parsed[i]) ? parsed[i] : fallbackCat;
     await supabase
       .from("transactions")
       .update({ category: cat })

@@ -22,6 +22,10 @@ export const CATEGORY_COLORS: Record<string, string> = {
   Outro: "hsl(var(--negative))",
 };
 
-export function getCategoryColor(category: string): string {
+export function getCategoryColor(
+  category: string,
+  colorMap?: Record<string, string>
+): string {
+  if (colorMap?.[category]) return colorMap[category];
   return CATEGORY_COLORS[category] ?? DEFAULT_CATEGORY_COLOR;
 }

@@ -4,13 +4,19 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/category-colors";
+import { translateCategory } from "@/lib/category-labels";
 
 interface DataPoint {
   category: string;
   total: number;
 }
 
-export function CategoryDonut({ data }: { data: DataPoint[] }) {
+interface CategoryDonutProps {
+  data: DataPoint[];
+  colorMap?: Record<string, string>;
+}
+
+export function CategoryDonut({ data, colorMap }: CategoryDonutProps) {
   return (
     <div className="flex flex-col gap-4">
       <ResponsiveContainer width="100%" height={300}>
@@ -23,16 +29,20 @@ export function CategoryDonut({ data }: { data: DataPoint[] }) {
             outerRadius={100}
             paddingAngle={2}
             dataKey="total"
+            nameKey="category"
           >
             {data.map((entry) => (
               <Cell
                 key={entry.category}
-                fill={getCategoryColor(entry.category)}
+                fill={getCategoryColor(entry.category, colorMap)}
               />
             ))}
           </Pie>
           <Tooltip
-            formatter={(value) => formatCurrency(Number(value ?? 0))}
+            formatter={(value, name) => [
+              formatCurrency(Number(value ?? 0)),
+              translateCategory(String(name ?? "")),
+            ]}
             contentStyle={{
               backgroundColor: "hsl(var(--card))",
               border: "1px solid hsl(var(--border))",
@@ -47,9 +57,9 @@ export function CategoryDonut({ data }: { data: DataPoint[] }) {
           <Badge key={entry.category} variant="outline">
             <span
               className="size-2 rounded-full"
-              style={{ backgroundColor: getCategoryColor(entry.category) }}
+              style={{ backgroundColor: getCategoryColor(entry.category, colorMap) }}
             />
-            {entry.category}
+            {translateCategory(entry.category)}
           </Badge>
         ))}
       </div>
