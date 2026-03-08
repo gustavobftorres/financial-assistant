@@ -6,12 +6,38 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { formatCurrency } from "@/lib/utils";
 import { SpendingByCategoryBar } from "@/components/charts/spending-by-category-bar";
-import { MonthlyEvolutionLine } from "@/components/charts/monthly-evolution-line";
+import {
+  MonthlyEvolutionLine,
+  type EvolutionDataPoint,
+} from "@/components/charts/monthly-evolution-line";
 import { CategoryDonut } from "@/components/charts/category-donut";
-import { MonthlyOverviewCard } from "@/components/monthly-overview-card";
+import { FixedCostProjectionBar } from "@/components/charts/fixed-cost-projection-bar";
 import { LoadingCoin } from "@/components/loading-coin";
 
 const EXCLUDED_CATEGORIES_FROM_CHARTS = new Set(["Invoice Payment", "Incomes"]);
+
+function computeFixedCostForMonth(
+  fixedCosts: { total_amount: number; installments: number; start_month: string }[],
+  monthKey: string
+): number {
+  const [y, m] = monthKey.split("-").map(Number);
+  const monthNum = y * 12 + (m - 1);
+  let sum = 0;
+  for (const fc of fixedCosts) {
+    const [sy, sm] = fc.start_month.split("-").map(Number);
+    const startNum = sy * 12 + (sm - 1);
+    if (monthNum < startNum) continue;
+    const monthlyAmount =
+      fc.installments > 0
+        ? Number(fc.total_amount) / fc.installments
+        : Number(fc.total_amount);
+    const endNum =
+      fc.installments > 0 ? startNum + fc.installments : Infinity;
+    if (monthNum >= endNum) continue;
+    sum += monthlyAmount;
+  }
+  return Math.round(sum * 100) / 100;
+}
 
 export default function DashboardPage() {
   const now = new Date();
@@ -36,6 +62,10 @@ export default function DashboardPage() {
     offset: 0,
   });
 
+  const { data: categoryBudgets } = trpc.budget.getCategoryBudgets.useQuery();
+  const { data: fixedCosts } = trpc.budget.getFixedCosts.useQuery();
+  const { data: categories } = trpc.categories.list.useQuery();
+
   const byCategory = useMemo(() => {
     const map: Record<string, number> = {};
     for (const tx of listData?.data ?? []) {
@@ -50,6 +80,41 @@ export default function DashboardPage() {
       .sort((a, b) => b.total - a.total)
       .slice(0, 8);
   }, [listData]);
+
+  const spendingByCategoryWithBudget = useMemo(() => {
+    const budgetMap = new Map<string, number>();
+    for (const budget of categoryBudgets ?? []) {
+      budgetMap.set(budget.category, Number(budget.monthly_limit));
+    }
+    return byCategory.map((item) => {
+      const budget = budgetMap.get(item.category);
+      return budget && budget > 0 ? { ...item, budget } : item;
+    });
+  }, [byCategory, categoryBudgets]);
+
+  const categoryColorMap = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const c of categories ?? []) {
+      m[c.name] = c.color;
+    }
+    return m;
+  }, [categories]);
+
+  const evolutionWithBreakdown = useMemo((): EvolutionDataPoint[] => {
+    const evo = evolution ?? [];
+    const fcs = fixedCosts ?? [];
+    if (evo.length === 0) return [];
+    return evo.map(({ month, total }) => {
+      const fixed = computeFixedCostForMonth(fcs, month);
+      const variable = Math.max(0, total - fixed);
+      return {
+        month,
+        total,
+        fixedCosts: fixed,
+        variableCosts: variable,
+      };
+    });
+  }, [evolution, fixedCosts]);
 
   const profile = trpc.profile.get.useQuery();
   const monthlyIncome = Number(profile.data?.monthly_income ?? 0);
@@ -142,7 +207,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
-              Saldo projetado
+              Saldo restante
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -179,7 +244,10 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {byCategory.length ? (
-              <SpendingByCategoryBar data={byCategory} />
+              <SpendingByCategoryBar
+                data={spendingByCategoryWithBudget}
+                colorMap={categoryColorMap}
+              />
             ) : (
               <p className="py-12 text-center text-muted-foreground">
                 Sem dados este mês
@@ -192,8 +260,11 @@ export default function DashboardPage() {
             <CardTitle>Evolução mensal</CardTitle>
           </CardHeader>
           <CardContent>
-            {evolution?.length ? (
-              <MonthlyEvolutionLine data={evolution} spendingCap={spendingCap} />
+            {evolutionWithBreakdown.length ? (
+              <MonthlyEvolutionLine
+                data={evolutionWithBreakdown}
+                spendingCap={spendingCap}
+              />
             ) : (
               <p className="py-12 text-center text-muted-foreground">
                 Sem dados
@@ -203,23 +274,37 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <CardTitle>Distribuição por categoria</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {byCategory.length ? (
+            <CategoryDonut
+              data={byCategory}
+              colorMap={categoryColorMap}
+            />
+          ) : (
+            <p className="py-12 text-center text-muted-foreground">
+              Sem dados este mês
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {(fixedCosts?.length ?? 0) > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Distribuição por categoria</CardTitle>
+            <CardTitle>Projeção de custos fixos (12 meses)</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Previsão mensal dos custos fixos cadastrados nas configurações.
+            </p>
           </CardHeader>
           <CardContent>
-            {byCategory.length ? (
-              <CategoryDonut data={byCategory} />
-            ) : (
-              <p className="py-12 text-center text-muted-foreground">
-                Sem dados este mês
-              </p>
-            )}
+            <FixedCostProjectionBar fixedCosts={fixedCosts ?? []} />
           </CardContent>
         </Card>
-        <MonthlyOverviewCard />
-      </div>
+      )}
     </div>
   );
 }

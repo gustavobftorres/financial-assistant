@@ -18,10 +18,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { translateCategory } from "@/lib/category-labels";
+import { getCategoryColor } from "@/lib/category-colors";
 import { cn } from "@/lib/utils";
 import type { Transaction } from "@/types/transaction";
 
-const CATEGORIES = [
+const FALLBACK_CATEGORIES = [
   "Food & Dining",
   "Restaurants",
   "Groceries",
@@ -44,13 +46,19 @@ const CATEGORIES = [
 
 interface TransactionTableProps {
   transactions: Transaction[];
+  categories?: { name: string; color: string }[];
   onCategoryChange: (id: string, category: string) => void;
 }
 
 export function TransactionTable({
   transactions,
+  categories,
   onCategoryChange,
 }: TransactionTableProps) {
+  const categoryList = categories?.map((c) => c.name) ?? FALLBACK_CATEGORIES;
+  const colorMap = categories
+    ? Object.fromEntries(categories.map((c) => [c.name, c.color]))
+    : undefined;
   return (
     <Table className="min-w-[640px]">
       <TableHeader>
@@ -90,18 +98,29 @@ export function TransactionTable({
                       variant="secondary"
                       className="max-w-[112px] truncate font-normal"
                     >
-                      {tx.category || (tx.amount > 0 ? "Incomes" : "Outro")}
+                      <span
+                        className="mr-1.5 inline-block size-2 rounded-full"
+                        style={{
+                          backgroundColor: getCategoryColor(
+                            tx.category || (tx.amount > 0 ? "Incomes" : "Other"),
+                            colorMap
+                          ),
+                        }}
+                      />
+                      {translateCategory(
+                        tx.category || (tx.amount > 0 ? "Incomes" : "Other")
+                      )}
                     </Badge>
                     <ChevronDown className="h-3 w-3" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
-                  {CATEGORIES.map((cat) => (
+                  {categoryList.map((cat) => (
                     <DropdownMenuItem
                       key={cat}
                       onClick={() => onCategoryChange(tx.id, cat)}
                     >
-                      {cat}
+                      {translateCategory(cat)}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>

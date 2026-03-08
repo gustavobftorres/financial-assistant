@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   Receipt,
   TrendingUp,
-  MessageSquare,
   HandCoins,
   Settings,
   LogOut,
@@ -32,7 +31,6 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/transactions", label: "Transações", icon: Receipt },
   { href: "/investments", label: "Investimentos", icon: TrendingUp },
-  { href: "/assistant", label: "Assistente", icon: MessageSquare },
   { href: "/settings", label: "Configurações", icon: Settings },
 ];
 
@@ -56,7 +54,7 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar variant="inset" collapsible="icon">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

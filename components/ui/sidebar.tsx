@@ -27,9 +27,9 @@ import { PanelLeftIcon } from "lucide-react"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
-const SIDEBAR_WIDTH = "16rem"
-const SIDEBAR_WIDTH_MOBILE = "18rem"
-const SIDEBAR_WIDTH_ICON = "3rem"
+const SIDEBAR_WIDTH = "14rem"
+const SIDEBAR_WIDTH_MOBILE = "16rem"
+const SIDEBAR_WIDTH_ICON = "2.75rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
 type SidebarContextProps = {
@@ -138,7 +138,7 @@ function SidebarProvider({
           } as React.CSSProperties
         }
         className={cn(
-          "group/sidebar-wrapper flex min-h-svh w-full has-data-[variant=inset]:bg-sidebar",
+          "group/sidebar-wrapper flex h-svh min-h-svh max-h-svh w-full bg-red-500 overflow-hidden has-data-[variant=inset]:bg-sidebar",
           className
         )}
         {...props}
@@ -230,10 +230,15 @@ function Sidebar({
         data-slot="sidebar-container"
         data-side={side}
         className={cn(
-          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)] data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)] md:flex",
+          "fixed z-10 hidden w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)] data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)] md:flex",
+          variant === "inset"
+            ? "top-4 bottom-4 h-[calc(100vh-2rem)]"
+            : "inset-y-0 h-svh",
           // Adjust the padding for floating and inset variants.
-          variant === "floating" || variant === "inset"
+          variant === "floating"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
+            : variant === "inset"
+              ? "pl-2 pt-2 pb-2 pr-0 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
             : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
           className
         )}
@@ -242,7 +247,7 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className="flex size-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-sidebar-border"
+          className="flex size-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-sidebar-border group-data-[variant=inset]:rounded-l-2xl group-data-[variant=inset]:shadow-sm"
         >
           {children}
         </div>
@@ -307,7 +312,7 @@ function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
     <main
       data-slot="sidebar-inset"
       className={cn(
-        "relative flex w-full flex-1 flex-col bg-background md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
+        "relative flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-background md:peer-data-[variant=inset]:my-[23px] md:peer-data-[variant=inset]:mr-3 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-r-2xl md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:border-l-0 md:peer-data-[variant=inset]:border-sidebar-border md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-3 md:peer-data-[variant=inset]:before:absolute md:peer-data-[variant=inset]:before:-left-3 md:peer-data-[variant=inset]:before:top-0 md:peer-data-[variant=inset]:before:h-3 md:peer-data-[variant=inset]:before:w-3 md:peer-data-[variant=inset]:before:rounded-tr-full md:peer-data-[variant=inset]:before:border-t md:peer-data-[variant=inset]:before:border-r md:peer-data-[variant=inset]:before:border-sidebar-border md:peer-data-[variant=inset]:before:content-[''] md:peer-data-[variant=inset]:after:absolute md:peer-data-[variant=inset]:after:-left-3 md:peer-data-[variant=inset]:after:bottom-0 md:peer-data-[variant=inset]:after:h-3 md:peer-data-[variant=inset]:after:w-3 md:peer-data-[variant=inset]:after:rounded-br-full md:peer-data-[variant=inset]:after:border-b md:peer-data-[variant=inset]:after:border-r md:peer-data-[variant=inset]:after:border-sidebar-border md:peer-data-[variant=inset]:after:content-['']",
         className
       )}
       {...props}

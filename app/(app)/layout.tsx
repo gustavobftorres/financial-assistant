@@ -7,6 +7,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { ChatWidget } from "@/components/chat-widget";
 
 export default async function AppLayout({
   children,
@@ -33,15 +34,18 @@ export default async function AppLayout({
   }
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
+    <div className="relative z-[1] min-h-svh w-full bg-sidebar">
+      <SidebarProvider>
+        <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-4">
           <SidebarTrigger className="-ml-1" />
           <InvestmentsHeaderActions />
         </header>
         <main className="flex-1 overflow-auto p-6 lg:p-8">{children}</main>
+        <ChatWidget />
       </SidebarInset>
     </SidebarProvider>
+    </div>
   );
 }

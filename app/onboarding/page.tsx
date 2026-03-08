@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { parseCurrencyInput } from "@/lib/utils";
 
 export default function OnboardingPage() {
   const [monthlyIncome, setMonthlyIncome] = useState("");
@@ -27,8 +28,8 @@ export default function OnboardingPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const income = parseFloat(monthlyIncome.replace(/\D/g, "")) / 100;
-    const goal = parseFloat(monthlySavingsGoal.replace(/\D/g, "")) / 100;
+    const income = parseCurrencyInput(monthlyIncome);
+    const goal = parseCurrencyInput(monthlySavingsGoal);
     if (isNaN(income) || income <= 0) return;
     upsert.mutate({
       monthly_income: income,

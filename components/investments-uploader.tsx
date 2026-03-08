@@ -5,16 +5,20 @@ import { cn } from "@/lib/utils";
 import { Upload } from "lucide-react";
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-const ACCEPTED_TYPES = ["text/csv", "application/csv", "text/plain"];
 
-interface CsvUploaderProps {
-  onUpload: (content: string, fileName: string) => Promise<void>;
-  type: "transactions" | "investments";
+interface InvestmentsUploaderProps {
+  onUploadExcel: (base64Content: string, fileName: string) => Promise<void>;
+  onUploadCsv?: (content: string, fileName: string) => Promise<void>;
   className?: string;
   compact?: boolean;
 }
 
-export function CsvUploader({ onUpload, type, className, compact }: CsvUploaderProps) {
+export function InvestmentsUploader({
+  onUploadExcel,
+  onUploadCsv,
+  className,
+  compact,
+}: InvestmentsUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,8 +26,16 @@ export function CsvUploader({ onUpload, type, className, compact }: CsvUploaderP
   const processFile = useCallback(
     async (file: File) => {
       setError(null);
-      if (!ACCEPTED_TYPES.includes(file.type) && !file.name.endsWith(".csv")) {
-        setError("Arquivo deve ser CSV");
+      const isExcel =
+        file.name.endsWith(".xlsx") ||
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+      const isCsv =
+        file.name.endsWith(".csv") ||
+        ["text/csv", "application/csv", "text/plain"].includes(file.type);
+
+      if (!isExcel && !isCsv) {
+        setError("Arquivo deve ser Excel (.xlsx) ou CSV");
         return;
       }
       if (file.size > MAX_SIZE) {
@@ -33,15 +45,28 @@ export function CsvUploader({ onUpload, type, className, compact }: CsvUploaderP
 
       setIsLoading(true);
       try {
-        const content = await file.text();
-        await onUpload(content, file.name);
+        if (isExcel) {
+          const buffer = await file.arrayBuffer();
+          const base64 = btoa(
+            new Uint8Array(buffer).reduce(
+              (data, byte) => data + String.fromCharCode(byte),
+              ""
+            )
+          );
+          await onUploadExcel(base64, file.name);
+        } else if (onUploadCsv) {
+          const content = await file.text();
+          await onUploadCsv(content, file.name);
+        } else {
+          setError("Importação de CSV não configurada");
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Erro ao importar");
       } finally {
         setIsLoading(false);
       }
     },
-    [onUpload]
+    [onUploadExcel, onUploadCsv]
   );
 
   const handleDrop = useCallback(
@@ -63,11 +88,6 @@ export function CsvUploader({ onUpload, type, className, compact }: CsvUploaderP
     [processFile]
   );
 
-  const hint =
-    type === "transactions"
-      ? "Data, Descrição, Valor"
-      : "B3: Movimentação, Produto, Valor";
-
   return (
     <div
       className={cn(
@@ -88,14 +108,14 @@ export function CsvUploader({ onUpload, type, className, compact }: CsvUploaderP
     >
       <input
         type="file"
-        accept=".csv,text/csv"
+        accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
         onChange={handleChange}
         className="hidden"
-        id={`csv-upload-${type}`}
+        id="investments-upload"
         disabled={isLoading}
       />
       <label
-        htmlFor={`csv-upload-${type}`}
+        htmlFor="investments-upload"
         className={cn(
           "cursor-pointer flex items-center gap-2",
           !compact && "flex-col"
@@ -106,12 +126,12 @@ export function CsvUploader({ onUpload, type, className, compact }: CsvUploaderP
           {isLoading
             ? "Importando..."
             : compact
-              ? "Importar CSV"
-              : "Arraste um CSV ou clique para selecionar"}
+              ? "Importar Excel"
+              : "Arraste um arquivo Excel (.xlsx) ou CSV ou clique para selecionar"}
         </span>
         {!compact && (
           <span className="text-xs text-muted-foreground">
-            Máximo 5MB. Formato: {hint}
+            Máximo 5MB. Formato B3: Extrato da Área do Investidor
           </span>
         )}
       </label>

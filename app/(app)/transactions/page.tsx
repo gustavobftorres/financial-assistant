@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingCoin } from "@/components/loading-coin";
+import { translateCategory } from "@/lib/category-labels";
 
 export default function TransactionsPage() {
   const [month, setMonth] = useState<string>("all");
@@ -28,6 +29,7 @@ export default function TransactionsPage() {
 
   const utils = trpc.useUtils();
 
+  const { data: categories } = trpc.categories.list.useQuery();
   const { data, isLoading } = trpc.transactions.list.useQuery({
     month: month === "all" ? undefined : month,
     category: category === "all" ? undefined : category,
@@ -67,7 +69,7 @@ export default function TransactionsPage() {
     return opts;
   }, []);
 
-  const categories = [
+  const filterCategories = (categories?.map((c) => c.name) ?? [
     "Food & Dining",
     "Restaurants",
     "Groceries",
@@ -81,7 +83,7 @@ export default function TransactionsPage() {
     "Incomes",
     "Invoice Payment",
     "Other",
-  ];
+  ]).sort();
   const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / pageSize));
 
   return (
@@ -144,9 +146,9 @@ export default function TransactionsPage() {
                 <SelectGroup>
                   <SelectLabel>Categoria</SelectLabel>
                   <SelectItem value="all">Todas categorias</SelectItem>
-                  {categories.map((c) => (
+                  {filterCategories.map((c) => (
                     <SelectItem key={c} value={c}>
-                      {c}
+                      {translateCategory(c)}
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -184,6 +186,7 @@ export default function TransactionsPage() {
             <>
               <TransactionTable
                 transactions={data.data}
+                categories={categories}
                 onCategoryChange={(id, cat) =>
                   updateCategory.mutate({ id, category: cat })
                 }

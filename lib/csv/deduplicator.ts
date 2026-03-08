@@ -144,6 +144,70 @@ export async function importInvestments(
         unit_price: r.unit_price,
         total_value: r.total_value,
         operation: r.operation,
+        transaction_type: r.transaction_type ?? null,
+        source_import_id: importLog.id,
+      }))
+    );
+    if (insertError) throw new Error(insertError.message);
+  }
+
+  return { inserted: rows.length, duplicates: 0 };
+}
+
+async function sha256Bytes(data: ArrayBuffer): Promise<string> {
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export async function importInvestmentsFromExcel(
+  base64Content: string,
+  _fileName: string,
+  userId: string,
+  supabase: SupabaseClient
+): Promise<{ inserted: number; duplicates: number }> {
+  const bytes = new Uint8Array(Buffer.from(base64Content, "base64"));
+  const hash = await sha256Bytes(bytes.buffer);
+
+  const { data: existingImport } = await supabase
+    .from("csv_imports")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("file_hash", hash)
+    .maybeSingle();
+
+  if (existingImport) {
+    throw new Error("Arquivo já importado anteriormente");
+  }
+
+  const { parseInvestmentExcel } = await import("./excel-parser");
+  const rows = parseInvestmentExcel(bytes.buffer);
+
+  const { data: importLog, error: importError } = await supabase
+    .from("csv_imports")
+    .insert({
+      user_id: userId,
+      file_hash: hash,
+      import_type: "investments",
+      rows_inserted: rows.length,
+    })
+    .select()
+    .single();
+
+  if (importError) throw new Error(importError.message);
+
+  if (rows.length > 0) {
+    const { error: insertError } = await supabase.from("investments").insert(
+      rows.map((r) => ({
+        user_id: userId,
+        date: r.date,
+        asset_name: r.asset_name,
+        asset_type: r.asset_type,
+        quantity: r.quantity,
+        unit_price: r.unit_price,
+        total_value: r.total_value,
+        operation: r.operation,
+        transaction_type: r.transaction_type ?? null,
         source_import_id: importLog.id,
       }))
     );
