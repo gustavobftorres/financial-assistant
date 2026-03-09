@@ -13,11 +13,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { parseCurrencyInput } from "@/lib/utils";
+import { SUPPORTED_BANKS } from "@/lib/csv/banks";
 
 export default function OnboardingPage() {
   const [monthlyIncome, setMonthlyIncome] = useState("");
   const [monthlySavingsGoal, setMonthlySavingsGoal] = useState("");
+  const [bank, setBank] = useState<string>("generic");
   const router = useRouter();
   const upsert = trpc.profile.upsert.useMutation({
     onSuccess: () => {
@@ -34,6 +43,7 @@ export default function OnboardingPage() {
     upsert.mutate({
       monthly_income: income,
       monthly_savings_goal: isNaN(goal) ? 0 : goal,
+      bank: bank as "nubank" | "banco_inter" | "generic",
     });
   }
 
@@ -74,6 +84,34 @@ export default function OnboardingPage() {
                 onChange={(e) => setMonthlySavingsGoal(e.target.value)}
                 disabled={upsert.isPending}
               />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="bank" className="text-sm font-medium">
+                Banco para importação de CSV
+              </label>
+              <Select
+                value={bank}
+                onValueChange={(v) => v && setBank(v)}
+                disabled={upsert.isPending}
+              >
+                <SelectTrigger id="bank">
+                  <SelectValue placeholder="Selecione seu banco">
+                    {bank
+                      ? SUPPORTED_BANKS.find((b) => b.id === bank)?.name
+                      : undefined}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {SUPPORTED_BANKS.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Usado para interpretar o extrato em CSV ao importar transações.
+              </p>
             </div>
           </CardContent>
           <CardFooter>

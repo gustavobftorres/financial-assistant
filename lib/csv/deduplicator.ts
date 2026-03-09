@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { BankId } from "./banks";
 import { parseBankCSV } from "./parser";
 
 async function sha256(text: string): Promise<string> {
@@ -25,7 +26,8 @@ export async function importTransactions(
   csvContent: string,
   _fileName: string,
   userId: string,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  bankId?: BankId | null
 ): Promise<{ inserted: number; duplicates: number }> {
   const hash = await sha256(csvContent);
 
@@ -40,7 +42,7 @@ export async function importTransactions(
     throw new Error("CSV já importado anteriormente");
   }
 
-  const rows = parseBankCSV(csvContent);
+  const rows = parseBankCSV(csvContent, bankId);
 
   const { data: existingTxs } = await supabase
     .from("transactions")
