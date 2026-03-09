@@ -49,6 +49,7 @@ import {
   formatCurrencyInput,
   parseCurrencyInput,
 } from "@/lib/utils";
+import { SUPPORTED_BANKS } from "@/lib/csv/banks";
 
 function getMonthOptions(): { value: string; label: string }[] {
   const options: { value: string; label: string }[] = [];
@@ -76,6 +77,7 @@ export default function SettingsPage() {
 
   const [monthlyIncome, setMonthlyIncome] = useState("");
   const [monthlySavingsGoal, setMonthlySavingsGoal] = useState("");
+  const [bank, setBank] = useState<string>("generic");
 
   const [fixedCostName, setFixedCostName] = useState("");
   const [fixedCostAmount, setFixedCostAmount] = useState("");
@@ -202,8 +204,14 @@ export default function SettingsPage() {
     if (!profile.data) return;
     const income = Number(profile.data.monthly_income ?? 0);
     const goal = Number(profile.data.monthly_savings_goal ?? 0);
+    const profileBank = profile.data.bank as string | null;
     setMonthlyIncome(income > 0 ? formatCurrencyInput(income) : "");
     setMonthlySavingsGoal(goal > 0 ? formatCurrencyInput(goal) : "");
+    setBank(
+      profileBank && ["nubank", "banco_inter", "generic"].includes(profileBank)
+        ? profileBank
+        : "generic"
+    );
   }, [profile.data]);
 
   const incomeValue = useMemo(
@@ -250,6 +258,7 @@ export default function SettingsPage() {
     upsertProfile.mutate({
       monthly_income: incomeValue,
       monthly_savings_goal: goalValue,
+      bank: bank as "nubank" | "banco_inter" | "generic",
     });
   }
 
@@ -375,9 +384,35 @@ export default function SettingsPage() {
                   Quanto você deseja guardar por mês.
                 </FieldDescription>
               </Field>
+              <Field>
+                <FieldLabel htmlFor="bank">Banco para importação de CSV</FieldLabel>
+                <Select
+                  value={bank}
+                  onValueChange={(v) => v && setBank(v)}
+                  disabled={upsertProfile.isPending || profile.isLoading}
+                >
+                  <SelectTrigger id="bank">
+                    <SelectValue placeholder="Selecione seu banco">
+                      {bank
+                        ? SUPPORTED_BANKS.find((b) => b.id === bank)?.name
+                        : undefined}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SUPPORTED_BANKS.map((b) => (
+                      <SelectItem key={b.id} value={b.id}>
+                        {b.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FieldDescription>
+                  Usado para interpretar o extrato em CSV ao importar transações.
+                </FieldDescription>
+              </Field>
             </FieldGroup>
           </CardContent>
-          <CardFooter className="justify-end">
+          <CardFooter className="justify-end mt-4">
             <Button type="submit" disabled={!canSubmitProfile}>
               {upsertProfile.isPending ? "Salvando..." : "Salvar alterações"}
             </Button>

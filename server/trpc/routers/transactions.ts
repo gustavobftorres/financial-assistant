@@ -187,12 +187,19 @@ export const transactionsRouter = router({
       if (!input.fileName.toLowerCase().endsWith(".csv")) {
         throw new Error("Arquivo inválido. Envie um CSV.");
       }
+      const { data: profile } = await ctx.supabase
+        .from("profiles")
+        .select("bank")
+        .eq("id", ctx.userId)
+        .single();
+      const bankId = (profile?.bank as "nubank" | "banco_inter" | "generic") ?? "generic";
       const { importTransactions } = await import("@/lib/csv/deduplicator");
       const result = await importTransactions(
         input.csvContent,
         input.fileName,
         ctx.userId,
-        ctx.supabase
+        ctx.supabase,
+        bankId
       );
       return result;
     }),

@@ -16,6 +16,7 @@ export const profileRouter = router({
       z.object({
         monthly_income: z.number().positive(),
         monthly_savings_goal: z.number().min(0),
+        bank: z.enum(["nubank", "banco_inter", "generic"]).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -24,6 +25,7 @@ export const profileRouter = router({
           id: ctx.userId,
           monthly_income: input.monthly_income,
           monthly_savings_goal: input.monthly_savings_goal,
+          ...(input.bank != null && { bank: input.bank }),
           updated_at: new Date().toISOString(),
         },
         { onConflict: "id" }
