@@ -2,7 +2,6 @@
 
 [![Live Demo](https://img.shields.io/badge/demo-live-success?style=for-the-badge)](https://financial-assistant-nine.vercel.app)
 
-![FroshFunds Screenshot](./screenshot.png)
 
 > **Live Demo:** [financial-assistant-nine.vercel.app](https://financial-assistant-nine.vercel.app)
 
