@@ -1,9 +1,9 @@
 # FroshFunds — Personal Finance Assistant
 
-[![Live Demo](https://img.shields.io/badge/demo-live-success?style=for-the-badge)](https://financial-assistant-nine.vercel.app)
+[![Live Demo](https://img.shields.io/badge/demo-live-success?style=for-the-badge)](https://financial-assitant-nine.vercel.app/)
 
 
-> **Live Demo:** [financial-assistant-nine.vercel.app](https://financial-assistant-nine.vercel.app)
+> **Live Demo:** [financial-assistant-nine.vercel.app](https://financial-assitant-nine.vercel.app/)
 
 ---
 
