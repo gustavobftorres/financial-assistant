@@ -126,6 +126,90 @@ export const transactionsRouter = router({
         .sort((a, b) => b.avg - a.avg);
     }),
 
+  savingsStreak: authedProcedure.query(async ({ ctx }) => {
+    const { data: profile } = await ctx.supabase
+      .from("profiles")
+      .select("monthly_savings_goal, best_savings_streak")
+      .eq("id", ctx.userId)
+      .single();
+
+    const goal = Number(profile?.monthly_savings_goal ?? 0);
+    const storedBest = Number(profile?.best_savings_streak ?? 0);
+
+    if (goal <= 0) {
+      return { currentStreak: 0, bestStreak: storedBest };
+    }
+
+    const now = new Date();
+    const monthlySavings: { month: string; savings: number }[] = [];
+
+    for (let i = 0; i < 24; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const start = new Date(d.getFullYear(), d.getMonth(), 1)
+        .toISOString()
+        .split("T")[0];
+      const end = new Date(d.getFullYear(), d.getMonth() + 1, 0)
+        .toISOString()
+        .split("T")[0];
+
+      const { data } = await ctx.supabase
+        .from("transactions")
+        .select("amount")
+        .eq("user_id", ctx.userId)
+        .gte("date", start)
+        .lte("date", end);
+
+      const totalIncome = (data ?? [])
+        .filter((t) => t.amount > 0)
+        .reduce((s, t) => s + Number(t.amount), 0);
+      const totalExpense = (data ?? [])
+        .filter((t) => t.amount < 0)
+        .reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
+      const savings = totalIncome - totalExpense;
+
+      monthlySavings.push({ month, savings });
+    }
+
+    monthlySavings.reverse();
+
+    let currentStreak = 0;
+    for (let i = monthlySavings.length - 1; i >= 0; i--) {
+      if (i === monthlySavings.length - 1) continue;
+      const { savings } = monthlySavings[i];
+      if (savings >= goal) {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+
+    let bestComputed = 0;
+    let run = 0;
+    for (const { savings } of monthlySavings) {
+      if (savings >= goal) {
+        run++;
+        bestComputed = Math.max(bestComputed, run);
+      } else {
+        run = 0;
+      }
+    }
+
+    const bestStreak = Math.max(storedBest, bestComputed);
+
+    if (bestComputed > storedBest) {
+      await ctx.supabase
+        .from("profiles")
+        .update({
+          best_savings_streak: bestStreak,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", ctx.userId);
+    }
+
+    return { currentStreak, bestStreak };
+  }),
+
   monthlyEvolution: authedProcedure
     .input(
       z.object({

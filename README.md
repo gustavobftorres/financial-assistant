@@ -1,78 +1,90 @@
-# FroshFunds — Assistente Pessoal de Finanças
+# FroshFunds — Personal Finance Assistant
 
-Aplicação web para gerenciamento de finanças pessoais: importação de extratos bancários via CSV, dashboards de gastos, e assistente de IA para insights e sugestões.
+[![Live Demo](https://img.shields.io/badge/demo-live-success?style=for-the-badge)](https://financial-assistant-nine.vercel.app)
+
+![FroshFunds Screenshot](./screenshot.png)
+
+> **Live Demo:** [financial-assistant-nine.vercel.app](https://financial-assistant-nine.vercel.app)
+
+---
+
+## What this does
+
+FroshFunds is a web app for managing your personal finances. You can import bank statements via CSV, view spending dashboards with charts, and get AI-powered insights and suggestions to understand where your money goes and how to improve your habits.
+
+---
 
 ## Stack
 
 - **Framework:** Next.js 14 (App Router)
 - **UI:** ShadCN/UI + Tailwind CSS
 - **API:** tRPC
-- **Banco:** Supabase (PostgreSQL + Auth)
-- **IA:** OpenAI gpt-4o-mini
-- **Gráficos:** Recharts
+- **Database:** Supabase (PostgreSQL + Auth)
+- **AI:** OpenAI gpt-4o-mini
+- **Charts:** Recharts
 
-## Pré-requisitos
+## Prerequisites
 
-1. Conta no [Supabase](https://supabase.com)
-2. Chave de API do [OpenAI](https://platform.openai.com/api-keys)
+1. A [Supabase](https://supabase.com) account
+2. An [OpenAI](https://platform.openai.com/api-keys) API key
 
-## Configuração
+## Setup
 
-1. Clone o repositório e instale as dependências:
+1. Clone the repository and install dependencies:
 
 ```bash
 npm install
 ```
 
-2. Copie o arquivo de ambiente:
+2. Copy the environment file:
 
 ```bash
 cp .env.example .env.local
 ```
 
-3. Preencha `.env.local` com suas credenciais:
-   - **NEXT_PUBLIC_SUPABASE_URL** e **NEXT_PUBLIC_SUPABASE_ANON_KEY** — Supabase Dashboard > Settings > API
-   - **SUPABASE_SERVICE_ROLE_KEY** — Supabase Dashboard > Settings > API (chave service_role)
+3. Fill in `.env.local` with your credentials:
+   - **NEXT_PUBLIC_SUPABASE_URL** and **NEXT_PUBLIC_SUPABASE_ANON_KEY** — Supabase Dashboard > Settings > API
+   - **SUPABASE_SERVICE_ROLE_KEY** — Supabase Dashboard > Settings > API (service_role key)
    - **OPENAI_API_KEY** — platform.openai.com > API keys
 
-4. Execute as migrações no Supabase (via CLI):
+4. Run migrations on Supabase (via CLI):
    ```bash
-   # Faça login (abre o navegador)
+   # Log in (opens browser)
    supabase login
 
-   # Vincule ao seu projeto (use o project ref da URL: https://<PROJECT_REF>.supabase.co)
-   supabase link --project-ref <SEU_PROJECT_REF>
+   # Link to your project (use the project ref from the URL: https://<PROJECT_REF>.supabase.co)
+   supabase link --project-ref <YOUR_PROJECT_REF>
 
-   # Envie as migrações para criar as tabelas
+   # Push migrations to create tables
    supabase db push
    ```
-   Ou, manualmente: Supabase Dashboard > SQL Editor > cole o conteúdo de `supabase/migrations/20240307120000_initial_schema.sql` > Execute
+   Or manually: Supabase Dashboard > SQL Editor > paste the contents of `supabase/migrations/20240307120000_initial_schema.sql` > Run
 
-5. Confirme que o provedor de e-mail está ativo:
+5. Ensure the email provider is enabled:
    - Supabase Dashboard > Authentication > Providers > Email
 
-## Desenvolvimento
+## Development
 
 ```bash
 npm run dev
 ```
 
-Acesse [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000).
 
 ## Deploy (Vercel)
 
-1. Conecte o repositório ao Vercel
-2. Configure as variáveis de ambiente
+1. Connect the repository to Vercel
+2. Configure environment variables
 3. Deploy
 
-## Formato do CSV (transações)
+## CSV format (transactions)
 
 ```
-Data,Descrição,Valor
+Date,Description,Amount
 2024-01-15,iFood,-45.90
-2024-01-14,Salário,5000.00
+2024-01-14,Salary,5000.00
 ```
 
-## Licença
+## License
 
 MIT

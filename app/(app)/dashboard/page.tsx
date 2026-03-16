@@ -13,6 +13,7 @@ import {
 import { CategoryDonut } from "@/components/charts/category-donut";
 import { FixedCostProjectionBar } from "@/components/charts/fixed-cost-projection-bar";
 import { LoadingCoin } from "@/components/loading-coin";
+import { Flame } from "lucide-react";
 
 const EXCLUDED_CATEGORIES_FROM_CHARTS = new Set(["Invoice Payment", "Incomes"]);
 
@@ -62,6 +63,13 @@ export default function DashboardPage() {
     offset: 0,
   });
 
+  const profile = trpc.profile.get.useQuery();
+  const monthlySavingsGoal = Number(profile.data?.monthly_savings_goal ?? 0);
+
+  const { data: savingsStreak } = trpc.transactions.savingsStreak.useQuery(
+    undefined,
+    { enabled: monthlySavingsGoal > 0 }
+  );
   const { data: categoryBudgets } = trpc.budget.getCategoryBudgets.useQuery();
   const { data: fixedCosts } = trpc.budget.getFixedCosts.useQuery();
   const { data: categories } = trpc.categories.list.useQuery();
@@ -116,9 +124,7 @@ export default function DashboardPage() {
     });
   }, [evolution, fixedCosts]);
 
-  const profile = trpc.profile.get.useQuery();
   const monthlyIncome = Number(profile.data?.monthly_income ?? 0);
-  const monthlySavingsGoal = Number(profile.data?.monthly_savings_goal ?? 0);
   const spendingCap = monthlyIncome - monthlySavingsGoal;
   const savingsAchieved = summary?.projectedBalance ?? 0;
   const progress =
@@ -233,6 +239,40 @@ export default function DashboardPage() {
             <p className="mt-2 text-xs text-muted-foreground">
               {progress.toFixed(0)}% da meta
             </p>
+            {monthlySavingsGoal > 0 && savingsStreak && (
+              <div className="mt-3 flex flex-col gap-0.5 border-t pt-3">
+                <div className="flex items-center gap-1.5">
+                  <Flame
+                    className={`h-4 w-4 ${
+                      savingsStreak.currentStreak > 0
+                        ? "text-orange-500"
+                        : "text-muted-foreground"
+                    }`}
+                  />
+                  <span
+                    className={
+                      savingsStreak.currentStreak > 0
+                        ? "text-sm font-medium"
+                        : "text-sm text-muted-foreground"
+                    }
+                  >
+                    {savingsStreak.currentStreak > 0
+                      ? `${savingsStreak.currentStreak} ${savingsStreak.currentStreak === 1 ? "mês" : "meses"} consecutivos`
+                      : "Nenhum mês consecutivo ainda"}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Melhor: {savingsStreak.bestStreak}{" "}
+                  {savingsStreak.bestStreak === 1 ? "mês" : "meses"}
+                  {savingsStreak.currentStreak >= savingsStreak.bestStreak &&
+                    savingsStreak.bestStreak > 0 && (
+                      <span className="ml-1 font-medium text-orange-500">
+                        · Novo recorde!
+                      </span>
+                    )}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

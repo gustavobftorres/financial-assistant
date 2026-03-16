@@ -12,6 +12,8 @@ import {
   HandCoins,
   Settings,
   LogOut,
+  Sun,
+  Moon,
 } from "lucide-react";
 import {
   Sidebar,
@@ -99,8 +101,8 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
-            <div className="flex h-8 items-center justify-between rounded-md px-2 text-sm">
-              <span className="text-muted-foreground">Tema escuro</span>
+            <div className="flex h-8 items-center gap-2 rounded-md px-2 text-sm">
+              <Sun className="h-4 w-4 text-muted-foreground" />
               <Switch
                 id="theme-mode"
                 checked={isDarkTheme}
@@ -109,6 +111,7 @@ export function AppSidebar() {
                 }
                 aria-label="Alternar tema"
               />
+              <Moon className="h-4 w-4 text-muted-foreground" />
             </div>
           </SidebarMenuItem>
           <SidebarMenuItem>
